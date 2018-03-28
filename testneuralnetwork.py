@@ -1,5 +1,5 @@
 import numpy as np
-import random, math, time
+import random, math, time, threading
 import matplotlib
 from matplotlib import pyplot as plt
 from matplotlib import animation as animation
@@ -16,9 +16,15 @@ def sigmoid(x):
 def differential_of_sigmoid(x):
     return sigmoid(x) * (1-sigmoid(x))
 
+class Thread:
+    def __init__(self, func):
+        self.t = threading.Thread(target=func,args=[])
+        self.t.daemon = True
+        self.t.start()
+        
 class NeuralNetwork:
     def __init__(self,inputSize,hiddenLayerSizes,outputSize):
-        self.learningRate = .001
+        self.learningRate = 1
         self.layers = []
         self.input = 2 * np.random.randn(inputSize,1) + 3
         self.layers.append(self.input)
@@ -62,27 +68,39 @@ class NeuralNetwork:
 
         error = output - self.layers[-1]
         #print("original error: " + str(error))
-        
-        outputDelta = error * differential_of_sigmoid(output)
-        lossDatas.append(np.abs(np.sum(error)))
+        outputDelta = self.layers[-1].T.dot(error) * differential_of_sigmoid(output)
+        print(outputDelta)
+        lossDatas.append(np.abs(np.sum(outputDelta**2)))
         #print("differential of sigmoid: " +str(differential_of_sigmoid(output)))
         self.weights[-1] -= outputDelta
 
         self.correctWeights(2, outputDelta)
-        return error
+        return outputDelta
      
-test = NeuralNetwork(1,[3,3],1)
-thenum = random.randint(50,100)
-error = test.train(np.array([[(thenum-50)/25]]),np.array([[thenum*3]]))
+test = NeuralNetwork(1,[3],1)
+thenum = random.randint(1,10)
+error = test.train(np.array([[thenum]]),np.array([[int(thenum<5)]]))
 time.sleep(.5)
 #plot = plt.plot(lossDatas)
 #plt.pause(.25)
 
+def plotLoop():
+    while True:
+        plt.plot(lossDatas)
+        plt.pause(.1)
+        plt.clf()
+        plt.cla()
+
+plotThread = Thread(plotLoop)
+
 while True:
-    thenum = random.randint(50,100)
-    error = test.train(np.array([[(thenum-50)/25]]),np.array([[thenum*3]]))
-    plt.plot(lossDatas)
-    plt.pause(.5)
+    thenum = random.randint(1,10)
+    error = test.train(np.array([[thenum]]),np.array([[int(thenum<5)]]))
+    if error**2 < .001:
+        #break
+        pass
+
+
 
 test.setInputs(np.array([[3]]))
 test.FeedForward()
