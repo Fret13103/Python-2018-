@@ -18,7 +18,7 @@ def differential_of_sigmoid(x):
 
 class NeuralNetwork:
     def __init__(self,inputSize,hiddenLayerSizes,outputSize):
-        self.learningRate = .01
+        self.learningRate = .001
         self.layers = []
         self.input = 2 * np.random.randn(inputSize,1) + 3
         self.layers.append(self.input)
@@ -64,7 +64,7 @@ class NeuralNetwork:
         #print("original error: " + str(error))
         
         outputDelta = error * differential_of_sigmoid(output)
-        lossDatas.append(np.sum(error))
+        lossDatas.append(np.abs(np.sum(error)))
         #print("differential of sigmoid: " +str(differential_of_sigmoid(output)))
         self.weights[-1] -= outputDelta
 
@@ -75,15 +75,12 @@ test = NeuralNetwork(1,[3,3],1)
 thenum = random.randint(50,100)
 error = test.train(np.array([[(thenum-50)/25]]),np.array([[thenum*3]]))
 time.sleep(.5)
-
-
-plot = plt.plot(lossDatas)
-plt.pause(.25)
+#plot = plt.plot(lossDatas)
+#plt.pause(.25)
 
 while True:
     thenum = random.randint(50,100)
     error = test.train(np.array([[(thenum-50)/25]]),np.array([[thenum*3]]))
-    time.sleep(.1)
     plt.plot(lossDatas)
     plt.pause(.5)
 
