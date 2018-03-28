@@ -24,7 +24,7 @@ class Thread:
         
 class NeuralNetwork:
     def __init__(self,inputSize,hiddenLayerSizes,outputSize):
-        self.learningRate = 1
+        self.learningRate = 1/1000000
         self.layers = []
         self.input = 2 * np.random.randn(inputSize,1) + 3
         self.layers.append(self.input)
@@ -66,23 +66,24 @@ class NeuralNetwork:
         self.setInputs(input)
         self.FeedForward()
 
-        error = output - self.layers[-1]
+        error = (self.layers[-1]-output)
         #print("original error: " + str(error))
-        outputDelta = self.layers[-1].T.dot(error) * differential_of_sigmoid(output)
-        print(outputDelta)
-        lossDatas.append(np.abs(np.sum(outputDelta**2)))
+        outputDelta = error * differential_of_sigmoid(output)
+        lossDatas.append(np.abs(np.sum(error)))
         #print("differential of sigmoid: " +str(differential_of_sigmoid(output)))
         self.weights[-1] -= outputDelta
 
         self.correctWeights(2, outputDelta)
-        return outputDelta
+        return error
      
-test = NeuralNetwork(1,[3],1)
-thenum = random.randint(1,10)
+test = NeuralNetwork(1,[5,5],1)
+thenum = 0
 error = test.train(np.array([[thenum]]),np.array([[int(thenum<5)]]))
 time.sleep(.5)
 #plot = plt.plot(lossDatas)
 #plt.pause(.25)
+
+finished = False
 
 def plotLoop():
     while True:
@@ -90,18 +91,23 @@ def plotLoop():
         plt.pause(.1)
         plt.clf()
         plt.cla()
+        if finished:
+            break
 
 plotThread = Thread(plotLoop)
 
-while True:
-    thenum = random.randint(1,10)
+for x in range(1000):
+    thenum = 1
     error = test.train(np.array([[thenum]]),np.array([[int(thenum<5)]]))
     if error**2 < .001:
         #break
         pass
+    time.sleep(.01)
+    
+finished = True
 
+time.sleep(.2)
 
-
-test.setInputs(np.array([[3]]))
+test.setInputs(np.array([[0]]))
 test.FeedForward()
-print(test.weights[-1])
+print("prediction: " + str(test.layers[-1]))
