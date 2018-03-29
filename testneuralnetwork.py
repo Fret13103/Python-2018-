@@ -24,7 +24,8 @@ class Thread:
         
 class NeuralNetwork:
     def __init__(self,inputSize,hiddenLayerSizes,outputSize):
-        self.learningRate = 1/1000000
+        self.learningRate = .01
+        self.learningRateDefault = .01
         self.layers = []
         self.input = 2 * np.random.randn(inputSize,1) + 3
         self.layers.append(self.input)
@@ -54,6 +55,7 @@ class NeuralNetwork:
             self.layers[index+1] = sigmoid(np.dot(self.layers[index], self.weights[index]))# + self.biases[index])
 
     def correctWeights(self, layerIndex, lastLayerDelta):
+        #print("lastLayerDelta: " + str(lastLayerDelta))
         newDelta = lastLayerDelta.dot(self.weights[-(layerIndex-1)].T)
         #print("newDelta: " + str(newDelta))
         
@@ -66,17 +68,18 @@ class NeuralNetwork:
         self.setInputs(input)
         self.FeedForward()
 
-        error = (self.layers[-1]-output)
+        error = (self.layers[-1]-output)**2
+        dError = 2 * (self.layers[-1]-output)
         #print("original error: " + str(error))
-        outputDelta = error * differential_of_sigmoid(output)
+        outputDelta = dError * differential_of_sigmoid(output)
         lossDatas.append(np.abs(np.sum(error)))
         #print("differential of sigmoid: " +str(differential_of_sigmoid(output)))
-        self.weights[-1] -= outputDelta
+        self.weights[-1] -= outputDelta * self.learningRate
 
         self.correctWeights(2, outputDelta)
         return error
      
-test = NeuralNetwork(1,[5,5],1)
+test = NeuralNetwork(1,[2],1)
 thenum = 0
 error = test.train(np.array([[thenum]]),np.array([[int(thenum<5)]]))
 time.sleep(.5)
@@ -96,12 +99,24 @@ def plotLoop():
 
 plotThread = Thread(plotLoop)
 
-for x in range(1000):
-    thenum = 1
+count=0
+lastErrors=[]
+while True:
+    count+=1
+    thenum=random.randint(0,10)
     error = test.train(np.array([[thenum]]),np.array([[int(thenum<5)]]))
-    if error**2 < .001:
-        #break
-        pass
+    if len(lastErrors)>4:
+        lastErrors[0] = error
+    else:
+        lastErrors.append(error)
+    avgError=0
+    for error in lastErrors:
+        avgError+=error
+    print(avgError/5)
+    test.learningRate = test.learningRateDefault / (1 + count/1500)
+    for weight in test.weights:
+        #print(weight)
+        time.sleep(0)
     time.sleep(.01)
     
 finished = True
